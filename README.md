@@ -18,7 +18,7 @@ BRS-R v1.0
 
 
 
-The BRS-R program is designed to utilize beat-by-beat physiological data using R-R interval (RRI) and systolic blood pressure (SBP). The program requires the download of R 4.2.2 (link) and RStudio (link) 
+The BRS-R program is designed to utilize beat-by-beat physiological data using R-R interval (RRI) and systolic blood pressure (SBP). The program requires the download of R 4.2.2 ([link](https://mirror.rcg.sfu.ca/mirror/CRAN/)) and RStudio ([link](https://posit.co/downloads/)) 
 # <a name="_toc140223748"></a>**File Preparation:**
 Because the program processes files as a batch, many files can be completed at once, if files are prepared correctly.
 
