@@ -2,8 +2,8 @@
 Batch process baroreflex sensitivity analysis using the sequence method
 Running the script:
 use command to get the most updated version:
-'''source("https://github.com/nkcheung95/BRS-Seq-R/blob/main/BRS%20v1.0.r?raw=TRUE")
-'''
+```source("https://github.com/nkcheung95/BRS-Seq-R/blob/main/BRS%20v1.0.r?raw=TRUE")
+```
 
 BRS-R v1.0
 
@@ -37,8 +37,8 @@ Begin setting up for analysis by creating a project in RStudio (File > New Direc
 
 In the new project console, copy and paste the following code:
 
-'''source("https://github.com/nkcheung95/BRS-Seq-R/blob/main/BRS%20v1.0.r?raw=TRUE")
-'''
+```source("https://github.com/nkcheung95/BRS-Seq-R/blob/main/BRS%20v1.0.r?raw=TRUE")
+```
 
 The console in the bottom left will begin running the script. Let the program run until it is completed – The console message will say “BRS Analyzed” when complete.
 
