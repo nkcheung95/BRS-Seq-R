@@ -1,5 +1,6 @@
 # BRS-Seq-R
 Batch process baroreflex sensitivity analysis using the sequence method
+
 Running the script:
 use command to get the most updated version:
 `source("https://github.com/nkcheung95/BRS-Seq-R/blob/main/BRS%20v1.0.r?raw=TRUE")`
@@ -9,13 +10,13 @@ BRS-R v1.0
 
 **Batch process baroreflex sensitivity analysis using the sequence method**
 # **Contents**
-[File Preparation:	1](#_toc140223748)
+[File Preparation](#_toc140223748)
 
-[Folder Preparation:	3](#_toc140223749)
+[Folder Preparation](#_toc140223749)
 
-[Running the program:	4](#_toc140223750)
+[Running the program](#_toc140223750)
 
-[Output Files:	4](#_toc140223751)
+[Output Files](#_toc140223751)
 
 
 
