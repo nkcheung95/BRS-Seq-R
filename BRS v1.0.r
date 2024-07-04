@@ -49,7 +49,7 @@ if (file.exists(folder2)) {
   
 }
 ####DATA LOAD
-
+print(file.id)
 raw_df <- read_delim(file.path(getwd(),file))
 
 df <- subset(raw_df, select = c(RRI,SBP) )
@@ -529,6 +529,7 @@ lag2_plot <- wrap_plots(lag2_plots)
 
 # Display the combined plot
 ggsave(file.path(getwd(),"export",file.id,"plots","lag2_plot.png"),width=10,height=10, dpi=400)
+
 
 
 
