@@ -249,7 +249,7 @@ while (i <= nrow(lag2_df) - 2) {
   # Loop through the data frames in df_list
   for (i in 1:length(lag2_sequences)) {
     # Fit a linear regression model to the current data frame
-    lm_model <- lm(RRI ~ SBP, data = lag1_sequences[[i]])  #
+    lm_model <- lm(RRI ~ SBP, data = lag2_sequences[[i]])  #
     
     # Add the linear regression model to the list
     lm2_list[[i]] <- lm_model
