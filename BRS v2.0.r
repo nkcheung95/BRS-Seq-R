@@ -64,8 +64,10 @@ for (file in files) {
   lag0_df <- df
   #lag1_df
   lag1_df <- df %>% mutate(SBP = lead(SBP, 1))
+  lag1_df$SBP[is.na(lag1_df$SBP)] <- FALSE
   #lag2_df
   lag2_df <- df %>% mutate(SBP = lead(SBP, 2))
+  lag2_df$SBP[is.na(lag2_df$SBP)] <- FALSE
   
   #lag0_seq  
   # Initialize columns to indicate increasing values
