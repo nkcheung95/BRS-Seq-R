@@ -69,99 +69,128 @@ for (file in files) {
   
   #lag0_seq  
   # Initialize columns to indicate increasing values
-  lag0_df$RRI_increase <- c(FALSE, diff(lag0_df$RRI) > 0)
-  lag0_df$SBP_increase <- c(FALSE, diff(lag0_df$SBP) > 0)
+lag0_df$RRI_increase <- c(FALSE, diff(lag0_df$RRI) > 0)
+lag0_df$SBP_increase <- c(FALSE, diff(lag0_df$SBP) > 0)
 
-  # Initialize a list to store sequences
-  lag0_sequences <- list()
-  i <- 1
-  while (i <= nrow(lag0_df) - 2) {
-    # Check for a sequence starting at the current index
-    if (lag0_df$RRI_increase[i + 1] && lag0_df$RRI_increase[i + 2] && lag0_df$SBP_increase[i + 1] && lag0_df$SBP_increase[i + 2]) {
-      sequence_start <- i
-      
-      # Move forward to find the end of the sequence
-      while (i <= nrow(lag0_df) - 1 && lag0_df$RRI_increase[i + 1] && lag0_df$SBP_increase[i + 1]) {
-        i <- i + 1
-      }
-      
-      # Adjust the sequence end to exclude the last non-increasing value
-      sequence_end <- i
-      
-      # Store the sequence if it has at least three values
-      if (sequence_end - sequence_start + 1 >= 3) {
-        sequence <- lag0_df[sequence_start:sequence_end, ]
-        lag0_sequences <- append(lag0_sequences, list(sequence))
-      }
-    }
-    
+# Initialize a list to store sequences
+lag0_sequences <- list()
+
+i <- 1
+while (i <= nrow(lag0_df) - 2) {
+  # Skip if the next values are NA
+  if (any(is.na(lag0_df$RRI_increase[i + 1:2])) || any(is.na(lag0_df$SBP_increase[i + 1:2]))) {
     i <- i + 1
+    next
   }
   
+  # Check for a sequence starting at the current index
+  if (lag0_df$RRI_increase[i + 1] && lag0_df$RRI_increase[i + 2] &&
+      lag0_df$SBP_increase[i + 1] && lag0_df$SBP_increase[i + 2]) {
+    sequence_start <- i
+    
+    # Move forward to find the end of the sequence
+    while (i <= nrow(lag0_df) - 1 && !is.na(lag0_df$RRI_increase[i + 1]) &&
+           lag0_df$RRI_increase[i + 1] && !is.na(lag0_df$SBP_increase[i + 1]) &&
+           lag0_df$SBP_increase[i + 1]) {
+      i <- i + 1
+    }
+    
+    # Adjust the sequence end to exclude the last non-increasing value
+    sequence_end <- i
+    
+    # Store the sequence if it has at least three values
+    if (sequence_end - sequence_start + 1 >= 3) {
+      sequence <- lag0_df[sequence_start:sequence_end, ]
+      lag0_sequences <- append(lag0_sequences, list(sequence))
+    }
+  }
+  
+  i <- i + 1
+}
+
   
   #lag1_seq  
   # Initialize columns to indicate increasing values
-  lag1_df$RRI_increase <- c(FALSE, diff(lag1_df$RRI) > 0)
-  lag1_df$SBP_increase <- c(FALSE, diff(lag1_df$SBP) > 0)
-  
-  # Initialize a list to store sequences
-  lag1_sequences <- list()
-  
-  i <- 1
-  while (i <= nrow(lag1_df) - 2) {
-    # Check for a sequence starting at the current index
-    if (lag1_df$RRI_increase[i + 1] && lag1_df$RRI_increase[i + 2] && lag1_df$SBP_increase[i + 1] && lag1_df$SBP_increase[i + 2]) {
-      sequence_start <- i
-      
-      # Move forward to find the end of the sequence
-      while (i <= nrow(lag1_df) - 1 && lag1_df$RRI_increase[i + 1] && lag1_df$SBP_increase[i + 1]) {
-        i <- i + 1
-      }
-      
-      # Adjust the sequence end to exclude the last non-increasing value
-      sequence_end <- i
-      
-      # Store the sequence if it has at least three values
-      if (sequence_end - sequence_start + 1 >= 3) {
-        sequence <- lag1_df[sequence_start:sequence_end, ]
-        lag1_sequences <- append(lag1_sequences, list(sequence))
-      }
-    }
-    
+lag1_df$RRI_increase <- c(FALSE, diff(lag1_df$RRI) > 0)
+lag1_df$SBP_increase <- c(FALSE, diff(lag1_df$SBP) > 0)
+
+# Initialize a list to store sequences
+lag1_sequences <- list()
+
+i <- 1
+while (i <= nrow(lag1_df) - 2) {
+  # Skip if the next values are NA
+  if (any(is.na(lag1_df$RRI_increase[i + 1:2])) || any(is.na(lag1_df$SBP_increase[i + 1:2]))) {
     i <- i + 1
-  }
-  #lag1_seq  
-  # Initialize columns to indicate increasing values
-  lag2_df$RRI_increase <- c(FALSE, diff(lag2_df$RRI) > 0)
-  lag2_df$SBP_increase <- c(FALSE, diff(lag2_df$SBP) > 0)
-  
-  # Initialize a list to store sequences
-  lag2_sequences <- list()
-  
-  i <- 1
-  while (i <= nrow(lag2_df) - 2) {
-    # Check for a sequence starting at the current index
-    if (lag2_df$RRI_increase[i + 1] && lag2_df$RRI_increase[i + 2] && lag2_df$SBP_increase[i + 1] && lag2_df$SBP_increase[i + 2]) {
-      sequence_start <- i
-      
-      # Move forward to find the end of the sequence
-      while (i <= nrow(lag2_df) - 1 && lag2_df$RRI_increase[i + 1] && lag2_df$SBP_increase[i + 1]) {
-        i <- i + 1
-      }
-      
-      # Adjust the sequence end to exclude the last non-increasing value
-      sequence_end <- i
-      
-      # Store the sequence if it has at least three values
-      if (sequence_end - sequence_start + 1 >= 3) {
-        sequence <- lag2_df[sequence_start:sequence_end, ]
-        lag2_sequences <- append(lag2_sequences, list(sequence))
-      }
-    }
-    
-    i <- i + 1
+    next
   }
   
+  # Check for a sequence starting at the current index
+  if (lag1_df$RRI_increase[i + 1] && lag1_df$RRI_increase[i + 2] &&
+      lag1_df$SBP_increase[i + 1] && lag1_df$SBP_increase[i + 2]) {
+    sequence_start <- i
+    
+    # Move forward to find the end of the sequence
+    while (i <= nrow(lag1_df) - 1 && !is.na(lag1_df$RRI_increase[i + 1]) &&
+           lag1_df$RRI_increase[i + 1] && !is.na(lag1_df$SBP_increase[i + 1]) &&
+           lag1_df$SBP_increase[i + 1]) {
+      i <- i + 1
+    }
+    
+    # Adjust the sequence end to exclude the last non-increasing value
+    sequence_end <- i
+    
+    # Store the sequence if it has at least three values
+    if (sequence_end - sequence_start + 1 >= 3) {
+      sequence <- lag1_df[sequence_start:sequence_end, ]
+      lag1_sequences <- append(lag1_sequences, list(sequence))
+    }
+  }
+  
+  i <- i + 1
+}
+
+  #lag2_seq  
+    # Initialize columns to indicate increasing values
+lag2_df$RRI_increase <- c(FALSE, diff(lag2_df$RRI) > 0)
+lag2_df$SBP_increase <- c(FALSE, diff(lag2_df$SBP) > 0)
+
+# Initialize a list to store sequences
+lag2_sequences <- list()
+
+i <- 1
+while (i <= nrow(lag2_df) - 2) {
+  # Skip if the next values are NA
+  if (any(is.na(lag2_df$RRI_increase[i + 1:2])) || any(is.na(lag2_df$SBP_increase[i + 1:2]))) {
+    i <- i + 1
+    next
+  }
+  
+  # Check for a sequence starting at the current index
+  if (lag2_df$RRI_increase[i + 1] && lag2_df$RRI_increase[i + 2] &&
+      lag2_df$SBP_increase[i + 1] && lag2_df$SBP_increase[i + 2]) {
+    sequence_start <- i
+    
+    # Move forward to find the end of the sequence
+    while (i <= nrow(lag2_df) - 1 && !is.na(lag2_df$RRI_increase[i + 1]) &&
+           lag2_df$RRI_increase[i + 1] && !is.na(lag2_df$SBP_increase[i + 1]) &&
+           lag2_df$SBP_increase[i + 1]) {
+      i <- i + 1
+    }
+    
+    # Adjust the sequence end to exclude the last non-increasing value
+    sequence_end <- i
+    
+    # Store the sequence if it has at least three values
+    if (sequence_end - sequence_start + 1 >= 3) {
+      sequence <- lag2_df[sequence_start:sequence_end, ]
+      lag2_sequences <- append(lag2_sequences, list(sequence))
+    }
+  }
+  
+  i <- i + 1
+}
+
 
   ######REGRESSION SLOPES
   ###WORKING
