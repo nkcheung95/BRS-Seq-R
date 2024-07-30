@@ -63,7 +63,7 @@ for (file in files) {
   #Lag0_df
   lag0_df <- df
   #lag1_df
-  lag1_df <- df %>% mutate(SBP = lead(SBP, 1))zz
+  lag1_df <- df %>% mutate(SBP = lead(SBP, 1))
   #lag2_df
   lag2_df <- df %>% mutate(SBP = lead(SBP, 2))
   
