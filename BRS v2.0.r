@@ -256,55 +256,7 @@ for (file in files) {
   lag0_final_full <- filter(lag0_slope_df,rsquared>=0.85)
   lag1_final_full <- filter (lag1_slope_df,rsquared>=0.85)
   lag2_final_full <- filter (lag2_slope_df,rsquared>= 0.85)
-  #Directionality
-  
-  #CLEAN
-  ###REMOVE OUTLIER SLOPES
-  lag0_final_full$outlier <- NA
-  IQR <- IQR(lag0_final_full$slope)
-  median <- median(lag0_final_full$slope)
-  Q1 <- median - 0.5*IQR
-  Q3 <- median + 0.5*IQR
-  for (i in 1:nrow(lag0_final_full)) {
-    if (lag0_final_full$slope[i] > Q3 | lag0_final_full$slope [i]<Q1) {
-      # outlier
-      lag0_final_full$outlier[i] <- "yes"
-    } else {
-      lag0_final_full$outlier[i] <- "no"
-    }
-  }
-  
-  lag1_final_full$outlier <- NA
-  IQR <- IQR(lag1_final_full$slope)
-  median <- median(lag1_final_full$slope)
-  Q1 <- median - 0.5*IQR
-  Q3 <- median + 0.5*IQR
-  for (i in 1:nrow(lag1_final_full)) {
-    if (lag1_final_full$slope[i] > Q3 | lag1_final_full$slope [i]<Q1) {
-      # outlier
-      lag1_final_full$outlier[i] <- "yes"
-    } else {
-      lag1_final_full$outlier[i] <- "no"
-    }
-  }
-  
-  lag2_final_full$outlier <- NA
-  IQR <- IQR(lag2_final_full$slope)
-  median <- median(lag2_final_full$slope)
-  Q1 <- median - 0.5*IQR
-  Q3 <- median + 0.5*IQR
-  for (i in 1:nrow(lag2_final_full)) {
-    if (lag2_final_full$slope[i] > Q3 | lag2_final_full$slope [i]<Q1) {
-      # outlier
-      lag2_final_full$outlier[i] <- "yes"
-    } else {
-      lag2_final_full$outlier[i] <- "no"
-    }
-  }
-  
-  lag0_final_full <- filter(lag0_final_full,outlier=="no")
-  lag1_final_full <- filter (lag1_final_full,outlier=="no")
-  lag2_final_full <- filter (lag2_final_full,outlier=="no")
+
   #Summary
   lag0_mean_slope <- mean(lag0_final_full$slope)
   lag0_sd_slope <- sd(lag0_final_full$slope)
