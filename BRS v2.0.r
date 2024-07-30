@@ -69,22 +69,19 @@ for (file in files) {
   
   #lag0_seq  
   # Initialize columns to indicate increasing values
-  lag0_df <- lag0_df %>%
-    mutate(RRI_increase = lead(RRI) > RRI,
-           SBP_increase = lead(SBP) > SBP)
-  
+  lag0_df$RRI_increase <- c(FALSE, diff(lag0_df$RRI) > 0)
+  lag0_df$SBP_increase <- c(FALSE, diff(lag0_df$SBP) > 0)
+
   # Initialize a list to store sequences
   lag0_sequences <- list()
-  
   i <- 1
   while (i <= nrow(lag0_df) - 2) {
     # Check for a sequence starting at the current index
-    if (isTRUE(lag0_df$RRI_increase[i + 1]) && isTRUE(lag0_df$RRI_increase[i + 2]) && 
-        isTRUE(lag0_df$SBP_increase[i + 1]) && isTRUE(lag0_df$SBP_increase[i + 2])) {
+    if (lag0_df$RRI_increase[i + 1] && lag0_df$RRI_increase[i + 2] && lag0_df$SBP_increase[i + 1] && lag0_df$SBP_increase[i + 2]) {
       sequence_start <- i
       
       # Move forward to find the end of the sequence
-      while (i <= nrow(lag0_df) - 1 && isTRUE(lag0_df$RRI_increase[i + 1]) && isTRUE(lag0_df$SBP_increase[i + 1])) {
+      while (i <= nrow(lag0_df) - 1 && lag0_df$RRI_increase[i + 1] && lag0_df$SBP_increase[i + 1]) {
         i <- i + 1
       }
       
@@ -101,11 +98,11 @@ for (file in files) {
     i <- i + 1
   }
   
+  
   #lag1_seq  
   # Initialize columns to indicate increasing values
-  lag1_df <- lag1_df %>%
-    mutate(RRI_increase = lead(RRI) > RRI,
-           SBP_increase = lead(SBP) > SBP)
+  lag1_df$RRI_increase <- c(FALSE, diff(lag1_df$RRI) > 0)
+  lag1_df$SBP_increase <- c(FALSE, diff(lag1_df$SBP) > 0)
   
   # Initialize a list to store sequences
   lag1_sequences <- list()
@@ -113,12 +110,11 @@ for (file in files) {
   i <- 1
   while (i <= nrow(lag1_df) - 2) {
     # Check for a sequence starting at the current index
-    if (isTRUE(lag1_df$RRI_increase[i + 1]) && isTRUE(lag1_df$RRI_increase[i + 2]) && 
-        isTRUE(lag1_df$SBP_increase[i + 1]) && isTRUE(lag1_df$SBP_increase[i + 2])) {
+    if (lag1_df$RRI_increase[i + 1] && lag1_df$RRI_increase[i + 2] && lag1_df$SBP_increase[i + 1] && lag1_df$SBP_increase[i + 2]) {
       sequence_start <- i
       
       # Move forward to find the end of the sequence
-      while (i <= nrow(lag1_df) - 1 && isTRUE(lag1_df$RRI_increase[i + 1]) && isTRUE(lag1_df$SBP_increase[i + 1])) {
+      while (i <= nrow(lag1_df) - 1 && lag1_df$RRI_increase[i + 1] && lag1_df$SBP_increase[i + 1]) {
         i <- i + 1
       }
       
@@ -136,9 +132,8 @@ for (file in files) {
   }
   #lag1_seq  
   # Initialize columns to indicate increasing values
-  lag2_df <- lag2_df %>%
-    mutate(RRI_increase = lead(RRI) > RRI,
-           SBP_increase = lead(SBP) > SBP)
+  lag2_df$RRI_increase <- c(FALSE, diff(lag2_df$RRI) > 0)
+  lag2_df$SBP_increase <- c(FALSE, diff(lag2_df$SBP) > 0)
   
   # Initialize a list to store sequences
   lag2_sequences <- list()
@@ -146,12 +141,11 @@ for (file in files) {
   i <- 1
   while (i <= nrow(lag2_df) - 2) {
     # Check for a sequence starting at the current index
-    if (isTRUE(lag2_df$RRI_increase[i + 1]) && isTRUE(lag2_df$RRI_increase[i + 2]) && 
-        isTRUE(lag2_df$SBP_increase[i + 1]) && isTRUE(lag2_df$SBP_increase[i + 2])) {
+    if (lag2_df$RRI_increase[i + 1] && lag2_df$RRI_increase[i + 2] && lag2_df$SBP_increase[i + 1] && lag2_df$SBP_increase[i + 2]) {
       sequence_start <- i
       
       # Move forward to find the end of the sequence
-      while (i <= nrow(lag2_df) - 1 && isTRUE(lag2_df$RRI_increase[i + 1]) && isTRUE(lag2_df$SBP_increase[i + 1])) {
+      while (i <= nrow(lag2_df) - 1 && lag2_df$RRI_increase[i + 1] && lag2_df$SBP_increase[i + 1]) {
         i <- i + 1
       }
       
@@ -167,6 +161,7 @@ for (file in files) {
     
     i <- i + 1
   }
+  
 
   ######REGRESSION SLOPES
   ###WORKING
