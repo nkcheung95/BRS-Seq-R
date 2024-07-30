@@ -6,7 +6,7 @@ Running the script:
 use command to get the most updated version:
 
 ```R
-source("https://github.com/nkcheung95/BRS-Seq-R/blob/main/BRS%20v1.0.r?raw=TRUE")
+source("https://github.com/nkcheung95/BRS-Seq-R/blob/main/BRS%20v2.0.r?raw=TRUE")
 ```
 
 
