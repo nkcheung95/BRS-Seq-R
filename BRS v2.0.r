@@ -253,7 +253,7 @@ for (i in seq_along(files)) {
   
   if (file.exists(file.path(getwd(),"export",file.id), recursive = TRUE)) {
     
-    cat("File previously analyzed")
+    cat("File previously analyzed ")
     
   } else {
     
