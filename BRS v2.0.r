@@ -46,7 +46,7 @@ for (i in seq_along(files)) {
   
   if (file.exists(folder2)) {
     
-    cat("Export folder exists")
+    cat("")
     
   } else {
     
