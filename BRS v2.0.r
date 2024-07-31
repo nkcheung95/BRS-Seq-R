@@ -14,7 +14,7 @@ folder <- "data_csv"
 
 if (file.exists(folder)) {
   
-  cat("The folder already exists")
+  cat("")
   
 } else {
   
@@ -46,7 +46,7 @@ for (i in seq_along(files)) {
   
   if (file.exists(folder2)) {
     
-    cat("The folder already exists")
+    cat("Export folder exists")
     
   } else {
     
@@ -253,7 +253,7 @@ for (i in seq_along(files)) {
   
   if (file.exists(file.path(getwd(),"export",file.id), recursive = TRUE)) {
     
-    cat("The folder already exists")
+    cat("File previously analyzed")
     
   } else {
     
@@ -262,7 +262,7 @@ for (i in seq_along(files)) {
   
   if (file.exists(file.path(getwd(),"export",file.id,"plots"), recursive = TRUE)) {
     
-    cat("The folder already exists")
+    cat("Plots previously created")
     
   } else {
     
