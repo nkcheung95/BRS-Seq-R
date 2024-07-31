@@ -276,7 +276,7 @@ for (i in seq_along(files)) {
   write.csv(lag0_final_full,file.path(getwd(),"export",file.id,"lag0_slope.csv"), row.names=FALSE)
   write.csv(lag1_final_full,file.path(getwd(),"export",file.id,"lag1_slope.csv"), row.names=FALSE)
   write.csv(lag2_final_full,file.path(getwd(),"export",file.id,"lag2_slope.csv"), row.names=FALSE)
-  write.csv(df_results_list,file.path(getwd(),"export",file.id,"BRS results.csv"), row.names=FALSE)
+  write.csv(df_results_list,file.path(getwd(),"export",file.id,"BRS results.csv"), row.names=TRUE)
   
    #BRS Sequence plot
 
