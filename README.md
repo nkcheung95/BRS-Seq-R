@@ -10,7 +10,7 @@ source("https://github.com/nkcheung95/BRS-Seq-R/blob/main/BRS%20v2.0.r?raw=TRUE"
 ```
 
 
-BRS-R v1.0
+BRS-R v2.0
 
 **Batch process baroreflex sensitivity analysis using the sequence method**
 # **Contents**
@@ -48,13 +48,13 @@ source("https://github.com/nkcheung95/BRS-Seq-R/blob/main/BRS%20v1.0.r?raw=TRUE"
 
 
 
-The console in the bottom left will begin running the script. Let the program run until it is completed – The console message will say “BRS Analyzed” when complete.
+The console in the bottom left will begin running the script. Let the program run until it is completed – The console message will say “All BRS Analyzed” when complete. 
 
 The program will install any required dependencies and create your base file structure inside your original working folder. The working folder will now contain the “data\_csv” folder.
 
 Your folder is now ready for batch processing your BRS files. Place all prepared csv files into the data\_csv folder.
 # <a name="_toc140223750"></a>**Running the program:**
-After placing all files you would like processed into data\_csv, the program can now be run again as described in the previous section. The console in the bottom left will begin running the script. Let the program run until it is completed. It will take longer this time but be patient – The console message will say “BRS Analyzed” when complete.
+After placing all files you would like processed into data\_csv, the program can now be run again as described in the previous section. The console in the bottom left will begin running the script. Let the program run until it is completed. It will take longer this time but be patient – The console message will say “All BRS Analyzed” when complete. A progress bar will appear after each file if you are batch processing files, so do not interrupt the script unless you want to end processing early.
 
 <a name="_toc140223751"></a>Output Files:
 
@@ -65,7 +65,7 @@ Each file from the data\_csv folder will now have its own export folder.
 Exported files include:
 
 - BRS results.csv 
-  - This file contains the summary info that has been filtered. Mean slope, Slope SD, and sequence count for lag 0,1,2 will be in this file. Outlier sequence slopes that do not meet criteria (R<sup>2</sup><0.85, or mean slope  >1.5 IQR) have been removed from these values.
+  - This file contains the summary info that has been filtered. Mean slope, Slope SD, and sequence count for lag 0,1,2 will be in this file. Outlier sequence slopes that do not meet criteria (R<sup>2</sup><0.85) have been removed from these values.
 - lag0\_slope
   - List of the sequences identified using lag 0 with their slopes and r<sup>2</sup> values
 - lag0\_data
@@ -77,7 +77,11 @@ Exported files include:
 
 In addition to these files, there will be a “plots” folder in the export for each file. 
 
-These plots are visualizations of every identified sequence, and are not necessary for data extraction, but can be helpful if troubleshooting a particular file. The plots are associated with the slopes in the unfiltered lagX\_slope.csv files, with figures going left to right in increasing order.
+These plots are visualizations of every identified sequence, and are not necessary for data extraction, but can be helpful if troubleshooting a particular file. The plots are associated with the slopes in the filtered lagX\_slope.csv files, blue indicates increasing sequences, red indicates decreasing sequences
+
+Future Updates:
+Sigmoid baroreflex curve plot
+plot label fix (currently not working)
 
 
 
