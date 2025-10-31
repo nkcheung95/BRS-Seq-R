@@ -1,4 +1,4 @@
-# BRS-Seq-R
+# Baroreflex Sequencer for R
 Batch process baroreflex sensitivity analysis using the sequence method
 
 Running the script:
@@ -10,7 +10,7 @@ source("https://github.com/nkcheung95/BRS-Seq-R/blob/main/BRS%20v2.0.r?raw=TRUE"
 ```
 
 
-BRS-R v2.0
+BRS-R v1.0
 
 **Batch process baroreflex sensitivity analysis using the sequence method**
 # **Contents**
