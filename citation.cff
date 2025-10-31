@@ -4,8 +4,8 @@ authors:
 - family-names: "Nicholas"
   given-names: "Cheung"
   orcid: "https://orcid.org/0000-0002-5758-6335"
-title: "MSNA-APD-Post-processing"
-version: "0.3"
+title: "Baroreflex Sequencer for R"
+version: "1.0"
 doi: ""
-date-released: 2025-08-01
-url: "https://github.com/nkcheung95/MSNA-APD-Post-processing"
+date-released: 2025-07-01
+url: "https://github.com/nkcheung95/BRS-Seq-R"
