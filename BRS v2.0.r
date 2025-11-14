@@ -1,5 +1,5 @@
 suppressMessages({
-packages <- c("tidyverse", "ggpubr", "rstatix","stringr","magick","ggsci","ggplot2","fs","patchwork")
+packages <- c("tidyverse", "ggpubr", "rstatix","stringr","magick","ggsci","ggplot2","fs","patchwork","reshape2)
 install.packages(setdiff(packages, rownames(installed.packages()))) 
 library(ggplot2)
 library(tidyverse)
