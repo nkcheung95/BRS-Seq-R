@@ -14,15 +14,21 @@ folder <- "data_csv"
 
 folder_path <- "./data_csv"
 
-if (file.exists(folder_path)) {
-  cat("Folder exists\n")
-} else {
-  dir.create(folder_path)
-  cat("Folder created\n")
-}
+if (file.exists(folder)) {
 
+  cat("")
+
+} else {
+
+  dir.create(folder)
+
+}
+# Set the directory path where the files are located
+folder_path <- "./data_csv"
 # List all the CSV files in the folder
 files <- list.files(path = folder_path, pattern = "\\.csv$", full.names = TRUE)
+
+
 
 # Iterate over the files and read them into a list
 df_list <- list()
