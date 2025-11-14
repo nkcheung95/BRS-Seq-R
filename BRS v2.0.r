@@ -10,8 +10,7 @@ library(fs)
 library(gridExtra)
 library(patchwork)
 #filesystem
-folder <- "data_csv"
-
+folder <-"data_csv"
 folder_path <- "./data_csv"
 
 if (file.exists(folder)) {
