@@ -53,19 +53,35 @@ for (i in seq_along(files)) {
     dir.create(folder2)
     
   }
-  ####DATA LOAD
+  #### DATA LOAD
   print(file.id)
   file_id <- file.id
-  raw_df <- read_delim(file.path(getwd(),file))
+  raw_df <- read_delim(file.path(getwd(), file))
   
-  df <- subset(raw_df, select = c(RRI,SBP) )
-  df$SBP <- as.numeric(df$SBP)
-  df$SBP <- round(df$SBP,3)
-  df$RRI <- as.numeric(df$RRI)
-  df$RRI <- round(df$RRI,3)*1000
+  # Find columns containing "RRI" and "SBP" (case-insensitive)
+  rri_col <- grep("RRI", names(raw_df), ignore.case = TRUE, value = TRUE)[1]
+  sbp_col <- grep("SBP", names(raw_df), ignore.case = TRUE, value = TRUE)[1]
+  
+  # Check if both columns were found
+  if (is.na(rri_col) || is.na(sbp_col)) {
+    stop("Error: Could not find columns containing 'RRI' and/or 'SBP'. 
+       Available columns: ", paste(names(raw_df), collapse = ", "))
+  }
+  
+  # Print which columns were found
+  cat("Using columns:", rri_col, "and", sbp_col, "\n")
+  
+  # Select and rename the columns to standardized names
+  df <- data.frame(
+    RRI = as.numeric(raw_df[[rri_col]]),
+    SBP = as.numeric(raw_df[[sbp_col]])
+  )
+  
+  # Process the data
+  df$SBP <- round(df$SBP, 3)
+  df$RRI <- round(df$RRI, 3) * 1000
   df <- na.omit(df)
-  df$index <- c(1:nrow(df))
-  
+  df$index <- 1:nrow(df)
   #Lag0_df
   lag0_df <- df
   #lag1_df
