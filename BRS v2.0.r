@@ -1,5 +1,5 @@
 suppressMessages({
-packages <- c("tidyverse", "ggpubr", "rstatix","stringr","magick","ggsci","ggplot2","fs","patchwork")
+packages <- c("tidyverse", "ggpubr", "rstatix","stringr","magick","ggsci","ggplot2","fs","patchwork","reshape2")
 install.packages(setdiff(packages, rownames(installed.packages()))) 
 library(ggplot2)
 library(tidyverse)
@@ -10,22 +10,23 @@ library(fs)
 library(gridExtra)
 library(patchwork)
 #filesystem
-folder <- "data_csv"
+folder <-"data_csv"
+folder_path <- "./data_csv"
 
 if (file.exists(folder)) {
-  
+
   cat("")
-  
+
 } else {
-  
+
   dir.create(folder)
-  
+
 }
 # Set the directory path where the files are located
 folder_path <- "./data_csv"
-
 # List all the CSV files in the folder
 files <- list.files(path = folder_path, pattern = "\\.csv$", full.names = TRUE)
+
 
 
 # Iterate over the files and read them into a list
