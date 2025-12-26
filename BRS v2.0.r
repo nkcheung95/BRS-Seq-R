@@ -1,5 +1,5 @@
 suppressMessages({
-packages <- c("tidyverse", "ggpubr", "rstatix","stringr","magick","ggsci","ggplot2","fs","patchwork","reshape2")
+packages <- c("tidyverse", "ggpubr", "rstatix","stringr","magick","ggsci","ggplot2","fs","patchwork")
 install.packages(setdiff(packages, rownames(installed.packages()))) 
 library(ggplot2)
 library(tidyverse)
@@ -10,23 +10,22 @@ library(fs)
 library(gridExtra)
 library(patchwork)
 #filesystem
-folder <-"data_csv"
-folder_path <- "./data_csv"
+folder <- "data_csv"
 
 if (file.exists(folder)) {
-
+  
   cat("")
-
+  
 } else {
-
+  
   dir.create(folder)
-
+  
 }
 # Set the directory path where the files are located
 folder_path <- "./data_csv"
+
 # List all the CSV files in the folder
 files <- list.files(path = folder_path, pattern = "\\.csv$", full.names = TRUE)
-
 
 
 # Iterate over the files and read them into a list
@@ -158,29 +157,60 @@ for (i in seq_along(files)) {
   ######REGRESSION SLOPES
   # Function to fit linear models, extract slope and R-squared, and add increasing/decreasing indicator
   extract_lm_slope_rsquared <- function(sequences, is_increasing) {
+    # Check if sequences is empty
+    if (length(sequences) == 0) {
+      return(data.frame(index = integer(), 
+                        slope = numeric(), 
+                        rsquared = numeric(), 
+                        increasing = logical(), 
+                        stringsAsFactors = FALSE))
+    }
+    
     # Create an empty list to store the linear regression models
     lm_list <- list()
     
-    # Loop through the sequences
-    for (i in 1:length(sequences)) {
-      # Fit a linear regression model to the current sequence
-      lm_model <- lm(RRI ~ SBP, data = sequences[[i]])
+    # Loop through the sequences using seq_along (safer than 1:length)
+    for (i in seq_along(sequences)) {
+      # Skip if sequence is NULL or has insufficient data
+      if (is.null(sequences[[i]]) || nrow(sequences[[i]]) < 2) {
+        lm_list[[i]] <- NULL
+        next
+      }
       
-      # Add the linear regression model to the list
-      lm_list[[i]] <- lm_model
+      # Fit a linear regression model to the current sequence
+      tryCatch({
+        lm_model <- lm(RRI ~ SBP, data = sequences[[i]])
+        lm_list[[i]] <- lm_model
+      }, error = function(e) {
+        lm_list[[i]] <- NULL
+        warning(paste("Error fitting model for sequence", i, ":", e$message))
+      })
     }
     
     # Create an empty data frame to store the slope coefficients, R-squared values, and increasing indicator
-    slope_df <- data.frame(index = integer(), slope = numeric(), rsquared = numeric(), increasing = logical(), stringsAsFactors = FALSE)
+    slope_df <- data.frame(index = integer(), 
+                           slope = numeric(), 
+                           rsquared = numeric(), 
+                           increasing = logical(), 
+                           stringsAsFactors = FALSE)
     
     # Loop through the linear regression models in lm_list
-    for (i in 1:length(lm_list)) {
+    for (i in seq_along(lm_list)) {
+      # Skip if model is NULL
+      if (is.null(lm_list[[i]])) {
+        next
+      }
+      
       # Extract the slope coefficient from the linear regression model
       slope <- coef(lm_list[[i]])[2]  # Assuming the slope is the second coefficient
       rsquared <- summary(lm_list[[i]])$r.squared
       
       # Create a new row in the slope_df with the index, slope coefficient, R-squared value, and increasing indicator
-      slope_df <- rbind(slope_df, data.frame(index = i, slope = slope, rsquared = rsquared, increasing = is_increasing, stringsAsFactors = FALSE))
+      slope_df <- rbind(slope_df, data.frame(index = i, 
+                                             slope = slope, 
+                                             rsquared = rsquared, 
+                                             increasing = is_increasing, 
+                                             stringsAsFactors = FALSE))
     }
     
     return(slope_df)
@@ -266,35 +296,49 @@ for (i in seq_along(files)) {
   lag1_beats <- do.call(rbind,lag1_sequences)
   lag2_beats <- do.call(rbind,lag2_sequences)
   #FILESYSTEM RESULTS
-  
-  
-  if (file.exists(file.path(getwd(),"export",file.id), recursive = TRUE)) {
-    
-    cat("File previously analyzed ")
-    
+  # Check if file has been previously analyzed
+  if (file.exists(file.path(getwd(), "export", file.id), recursive = TRUE)) {
+    cat("File previously analyzed - skipping:", file.id, "\n")
+    next  # Skip to the next file in the loop
   } else {
-    
-    dir.create(file.path(getwd(),"export",file.id), recursive = T)
+    dir.create(file.path(getwd(), "export", file.id), recursive = TRUE)
   }
   
-  if (file.exists(file.path(getwd(),"export",file.id,"plots"), recursive = TRUE)) {
-    
-    cat("Plots previously created")
-    
-  } else {
-    
-    dir.create(file.path(getwd(),"export",file.id,"plots"), recursive = T)
+  # Create plots directory
+  if (!file.exists(file.path(getwd(), "export", file.id, "plots"), recursive = TRUE)) {
+    dir.create(file.path(getwd(), "export", file.id, "plots"), recursive = TRUE)
   }
+  # Extract the base filename without extension
+  base_filename <- tools::file_path_sans_ext(basename(file))
   
-  # Export the combined dataframe as a CSV file
-  write.csv(lag0_beats, file.path(getwd(),"export",file.id,"lag0_data.csv"), row.names=FALSE)
-  write.csv(lag1_beats, file.path(getwd(),"export",file.id,"lag1_data.csv"), row.names=FALSE)
-  write.csv(lag2_beats, file.path(getwd(),"export",file.id,"lag2_data.csv"), row.names=FALSE)
-  write.csv(lag0_final_full,file.path(getwd(),"export",file.id,"lag0_slope.csv"), row.names=FALSE)
-  write.csv(lag1_final_full,file.path(getwd(),"export",file.id,"lag1_slope.csv"), row.names=FALSE)
-  write.csv(lag2_final_full,file.path(getwd(),"export",file.id,"lag2_slope.csv"), row.names=FALSE)
-  write.csv(df_results_list,file.path(getwd(),"export",file.id,"BRS results.csv"), row.names=TRUE)
+  # Export the combined dataframe as a CSV file with filename prefix
+  write.csv(lag0_beats, 
+            file.path(getwd(), "export", file.id, paste0(base_filename, "_lag0_data.csv")), 
+            row.names = FALSE)
   
+  write.csv(lag1_beats, 
+            file.path(getwd(), "export", file.id, paste0(base_filename, "_lag1_data.csv")), 
+            row.names = FALSE)
+  
+  write.csv(lag2_beats, 
+            file.path(getwd(), "export", file.id, paste0(base_filename, "_lag2_data.csv")), 
+            row.names = FALSE)
+  
+  write.csv(lag0_final_full, 
+            file.path(getwd(), "export", file.id, paste0(base_filename, "_lag0_slope.csv")), 
+            row.names = FALSE)
+  
+  write.csv(lag1_final_full, 
+            file.path(getwd(), "export", file.id, paste0(base_filename, "_lag1_slope.csv")), 
+            row.names = FALSE)
+  
+  write.csv(lag2_final_full, 
+            file.path(getwd(), "export", file.id, paste0(base_filename, "_lag2_slope.csv")), 
+            row.names = FALSE)
+  
+  write.csv(df_results_list, 
+            file.path(getwd(), "export", file.id, paste0(base_filename, "_BRS_results.csv")), 
+            row.names = TRUE)
    #BRS Sequence plot
 
   # Define the plotting functions
@@ -360,35 +404,45 @@ for (i in seq_along(files)) {
   create_plot_with_title <- function(plot, file_id) {
     plot + ggtitle(paste("Filtered Lag0 Plot for:", file_id))
   }
+  # Extract the base filename without extension
+  base_filename <- tools::file_path_sans_ext(basename(file))
+  
   # Generate and save plots for lag0
   lag0_plots_raw <- map(lag0_sequences, create_plot)
   lag0_plot_raw <- wrap_plots(Filter(Negate(is.null), lag0_plots_raw))
-  #ggsave(file.path(getwd(), "export", file.id, "plots", "lag0_plot_raw.png"), plot = lag0_plot_raw, width = 20, height = 20, dpi = 400)
+  #ggsave(file.path(getwd(), "export", file.id, "plots", paste0(base_filename, "_lag0_plot_raw.png")), 
+  #       plot = lag0_plot_raw, width = 20, height = 20, dpi = 400)
   
   lag0_plots_filtered <- map(lag0_sequences, create_plot_if)
   lag0_plot_filtered <- wrap_plots(Filter(Negate(is.null), lag0_plots_filtered))
   lag0_plot_filtered_with_title <- create_plot_with_title(lag0_plot_filtered, file_id)
-  ggsave(file.path(getwd(), "export", file.id, "plots", "lag0_plot_filtered.png"), plot = lag0_plot_filtered, width = 20, height = 20, dpi = 400)
+  ggsave(file.path(getwd(), "export", file.id, "plots", paste0(base_filename, "_lag0_plot_filtered.png")), 
+         plot = lag0_plot_filtered, width = 20, height = 20, dpi = 400)
   
   # Generate and save plots for lag1
   lag1_plots_raw <- map(lag1_sequences, create_plot)
   lag1_plot_raw <- wrap_plots(Filter(Negate(is.null), lag1_plots_raw))
-  #ggsave(file.path(getwd(), "export", file.id, "plots", "lag1_plot_raw.png"), plot = lag1_plot_raw, width = 20, height = 20, dpi = 400)
+  #ggsave(file.path(getwd(), "export", file.id, "plots", paste0(base_filename, "_lag1_plot_raw.png")), 
+  #       plot = lag1_plot_raw, width = 20, height = 20, dpi = 400)
   
   lag1_plots_filtered <- map(lag1_sequences, create_plot_if)
   lag1_plot_filtered <- wrap_plots(Filter(Negate(is.null), lag1_plots_filtered))
   lag1_plot_filtered_with_title <- create_plot_with_title(lag1_plot_filtered, file_id)
-  ggsave(file.path(getwd(), "export", file.id, "plots", "lag1_plot_filtered.png"), plot = lag1_plot_filtered, width = 20, height = 20, dpi = 400)
+  ggsave(file.path(getwd(), "export", file.id, "plots", paste0(base_filename, "_lag1_plot_filtered.png")), 
+         plot = lag1_plot_filtered, width = 20, height = 20, dpi = 400)
   
   # Generate and save plots for lag2
   lag2_plots_raw <- map(lag2_sequences, create_plot)
   lag2_plot_raw <- wrap_plots(Filter(Negate(is.null), lag2_plots_raw))
-  #ggsave(file.path(getwd(), "export", file.id, "plots", "lag2_plot_raw.png"), plot = lag2_plot_raw, width = 20, height = 20, dpi = 400)
+  #ggsave(file.path(getwd(), "export", file.id, "plots", paste0(base_filename, "_lag2_plot_raw.png")), 
+  #       plot = lag2_plot_raw, width = 20, height = 20, dpi = 400)
   
   lag2_plots_filtered <- map(lag2_sequences, create_plot_if)
   lag2_plot_filtered <- wrap_plots(Filter(Negate(is.null), lag2_plots_filtered))
   lag2_plot_filtered_with_title <- create_plot_with_title(lag2_plot_filtered, file_id)
-  ggsave(file.path(getwd(), "export", file.id, "plots", "lag2_plot_filtered.png"), plot = lag2_plot_filtered, width = 20, height = 20, dpi = 400)
+  ggsave(file.path(getwd(), "export", file.id, "plots", paste0(base_filename, "_lag2_plot_filtered.png")), 
+         plot = lag2_plot_filtered, width = 20, height = 20, dpi = 400)
+  
   # Update progress bar
   setTxtProgressBar(pb, i)
 }
