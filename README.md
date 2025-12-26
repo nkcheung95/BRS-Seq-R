@@ -34,7 +34,7 @@ These files should be named with participant and condition ID – the filename d
 
 See sample folder for sample data
 
-Files must have only 2 columns, RRI in seconds, and SBP in mmHg. **COLUMNS MUST BE LABELLED RRI AND SBP**.  Naming is important as the program requires the columns to be exact matches – check for spaces at the end of column names.
+Files must have these 2 columns, RRI in seconds, and SBP in mmHg. **COLUMNS MUST BE LABELLED RRI AND SBP**.  Naming is important as the program requires the columns to be exact matches – check for spaces at the end of column names. 
 
 RRI and SBP data can be pulled using beat by beat identification in labchart and copied from the datapad. Minimum 5 minutes of data is recommended for adequate sequence count.
 # <a name="_toc140223749"></a>**Folder Preparation:**
