@@ -407,41 +407,27 @@ for (i in seq_along(files)) {
   # Extract the base filename without extension
   base_filename <- tools::file_path_sans_ext(basename(file))
   
-  # Generate and save plots for lag0
-  lag0_plots_raw <- map(lag0_sequences, create_plot)
-  lag0_plot_raw <- wrap_plots(Filter(Negate(is.null), lag0_plots_raw))
-  #ggsave(file.path(getwd(), "export", file.id, "plots", paste0(base_filename, "_lag0_plot_raw.png")), 
-  #       plot = lag0_plot_raw, width = 20, height = 20, dpi = 400)
+  #plots
   
   lag0_plots_filtered <- map(lag0_sequences, create_plot_if)
   lag0_plot_filtered <- wrap_plots(Filter(Negate(is.null), lag0_plots_filtered))
   lag0_plot_filtered_with_title <- create_plot_with_title(lag0_plot_filtered, file_id)
   ggsave(file.path(getwd(), "export", file.id, "plots", paste0(base_filename, "_lag0_plot_filtered.png")), 
-         plot = lag0_plot_filtered, width = 20, height = 20, dpi = 400)
+         plot = lag0_plot_filtered, width = 10, height = 10, dpi = 400)
   
-  # Generate and save plots for lag1
-  lag1_plots_raw <- map(lag1_sequences, create_plot)
-  lag1_plot_raw <- wrap_plots(Filter(Negate(is.null), lag1_plots_raw))
-  #ggsave(file.path(getwd(), "export", file.id, "plots", paste0(base_filename, "_lag1_plot_raw.png")), 
-  #       plot = lag1_plot_raw, width = 20, height = 20, dpi = 400)
   
   lag1_plots_filtered <- map(lag1_sequences, create_plot_if)
   lag1_plot_filtered <- wrap_plots(Filter(Negate(is.null), lag1_plots_filtered))
   lag1_plot_filtered_with_title <- create_plot_with_title(lag1_plot_filtered, file_id)
   ggsave(file.path(getwd(), "export", file.id, "plots", paste0(base_filename, "_lag1_plot_filtered.png")), 
-         plot = lag1_plot_filtered, width = 20, height = 20, dpi = 400)
+         plot = lag1_plot_filtered, width = 10, height = 10, dpi = 400)
   
-  # Generate and save plots for lag2
-  lag2_plots_raw <- map(lag2_sequences, create_plot)
-  lag2_plot_raw <- wrap_plots(Filter(Negate(is.null), lag2_plots_raw))
-  #ggsave(file.path(getwd(), "export", file.id, "plots", paste0(base_filename, "_lag2_plot_raw.png")), 
-  #       plot = lag2_plot_raw, width = 20, height = 20, dpi = 400)
-  
+ 
   lag2_plots_filtered <- map(lag2_sequences, create_plot_if)
   lag2_plot_filtered <- wrap_plots(Filter(Negate(is.null), lag2_plots_filtered))
   lag2_plot_filtered_with_title <- create_plot_with_title(lag2_plot_filtered, file_id)
   ggsave(file.path(getwd(), "export", file.id, "plots", paste0(base_filename, "_lag2_plot_filtered.png")), 
-         plot = lag2_plot_filtered, width = 20, height = 20, dpi = 400)
+         plot = lag2_plot_filtered, width = 10, height = 10, dpi = 400)
   
   # Update progress bar
   setTxtProgressBar(pb, i)
