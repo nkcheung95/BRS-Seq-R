@@ -80,6 +80,11 @@ In addition to these files, there will be a “plots” folder in the export for
 These plots are visualizations of every identified sequence, and are not necessary for data extraction, but can be helpful if troubleshooting a particular file. The plots are associated with the slopes in the filtered lagX\_slope.csv files, blue indicates increasing sequences, red indicates decreasing sequences
 
 *NEW* to pull the data from your export folder into a summary csv, the BRS_Result_puller script will allow you to quickly extract the lag of your choice per file into a single CSV for easy exporting and summarization. 
+LAUNCH USING: 
+```R
+source("https://github.com/nkcheung95/BRS-Seq-R/blob/main/BRS_Result_puller.R?raw=TRUE")
+```
+
 
 Future Updates:
 Shiny dashboard for easier use
