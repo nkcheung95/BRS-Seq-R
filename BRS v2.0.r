@@ -1,3 +1,5 @@
+#BRS Sequence method
+#-----LIBS-----
 suppressMessages({
 packages <- c("tidyverse", "ggpubr", "rstatix","stringr","magick","ggsci","ggplot2","fs","patchwork")
 install.packages(setdiff(packages, rownames(installed.packages()))) 
@@ -9,7 +11,262 @@ library(magick)
 library(fs)
 library(gridExtra)
 library(patchwork)
-#filesystem
+  
+#-----FUNCS-----
+# Unified function to find sequences of increasing or decreasing values
+  find_sequences <- function(df, direction = "increasing") {
+    # Initialize columns to indicate value trends based on direction
+    if (direction == "increasing") {
+      df$RRI_trend <- c(FALSE, diff(df$RRI) > 0)
+      df$SBP_trend <- c(FALSE, diff(df$SBP) > 0)
+      trend_indicator <- TRUE
+    } else if (direction == "decreasing") {
+      df$RRI_trend <- c(FALSE, diff(df$RRI) < 0)
+      df$SBP_trend <- c(FALSE, diff(df$SBP) < 0)
+      trend_indicator <- FALSE
+    } else {
+      stop("Invalid direction. Use 'increasing' or 'decreasing'.")
+    }
+    
+    # Initialize a list to store sequences
+    sequences <- list()
+    
+    i <- 1
+    while (i <= nrow(df) - 2) {
+      # Skip if the next values are NA
+      if (any(is.na(df$RRI_trend[i + 1:2])) || any(is.na(df$SBP_trend[i + 1:2]))) {
+        i <- i + 1
+        next
+      }
+      
+      # Check for a sequence starting at the current index
+      if (df$RRI_trend[i + 1] && df$RRI_trend[i + 2] &&
+          df$SBP_trend[i + 1] && df$SBP_trend[i + 2]) {
+        sequence_start <- i
+        
+        # Move forward to find the end of the sequence
+        while (i <= nrow(df) - 1 && !is.na(df$RRI_trend[i + 1]) &&
+               df$RRI_trend[i + 1] && !is.na(df$SBP_trend[i + 1]) &&
+               df$SBP_trend[i + 1]) {
+          i <- i + 1
+        }
+        
+        # Adjust the sequence end to exclude the last non-trending value
+        sequence_end <- i
+        
+        # Store the sequence if it has at least three values
+        if (sequence_end - sequence_start + 1 >= 3) {
+          sequence <- df[sequence_start:sequence_end, ]
+          sequence$increasing <- trend_indicator
+          sequences <- append(sequences, list(sequence))
+        }
+      }
+      
+      i <- i + 1
+    }
+    
+    return(sequences)
+  }
+  # Function to fit linear models, extract slope and R-squared, and add increasing/decreasing indicator
+  extract_lm_slope_rsquared <- function(sequences, is_increasing) {
+    # Check if sequences is empty
+    if (length(sequences) == 0) {
+      return(data.frame(index = integer(), 
+                        slope = numeric(), 
+                        rsquared = numeric(), 
+                        increasing = logical(), 
+                        stringsAsFactors = FALSE))
+    }
+    
+    # Create an empty list to store the linear regression models
+    lm_list <- list()
+    
+    # Loop through the sequences using seq_along (safer than 1:length)
+    for (i in seq_along(sequences)) {
+      # Skip if sequence is NULL or has insufficient data
+      if (is.null(sequences[[i]]) || nrow(sequences[[i]]) < 2) {
+        lm_list[[i]] <- NULL
+        next
+      }
+      
+      # Fit a linear regression model to the current sequence
+      tryCatch({
+        lm_model <- lm(RRI ~ SBP, data = sequences[[i]])
+        lm_list[[i]] <- lm_model
+      }, error = function(e) {
+        lm_list[[i]] <- NULL
+        warning(paste("Error fitting model for sequence", i, ":", e$message))
+      })
+    }
+    
+    # Create an empty data frame to store the slope coefficients, R-squared values, and increasing indicator
+    slope_df <- data.frame(index = integer(), 
+                           slope = numeric(), 
+                           rsquared = numeric(), 
+                           increasing = logical(), 
+                           stringsAsFactors = FALSE)
+    
+    # Loop through the linear regression models in lm_list
+    for (i in seq_along(lm_list)) {
+      # Skip if model is NULL
+      if (is.null(lm_list[[i]])) {
+        next
+      }
+      
+      # Extract the slope coefficient from the linear regression model
+      slope <- coef(lm_list[[i]])[2]  # Assuming the slope is the second coefficient
+      rsquared <- summary(lm_list[[i]])$r.squared
+      
+      # Create a new row in the slope_df with the index, slope coefficient, R-squared value, and increasing indicator
+      slope_df <- rbind(slope_df, data.frame(index = i, 
+                                             slope = slope, 
+                                             rsquared = rsquared, 
+                                             increasing = is_increasing, 
+                                             stringsAsFactors = FALSE))
+    }
+    
+    return(slope_df)
+  }
+  # Function for summary extraction
+    calculate_summary_stats <- function(final_full, slope_df_inc_filtered, slope_df_dec_filtered, sequences, inc_sequences, dec_sequences) {
+    list(
+      mean_slope = mean(final_full$slope),
+      sd_slope = sd(final_full$slope),
+      seq_num = nrow(final_full),
+      seq_num_raw = length(sequences),
+      mean_inc_slope = mean(slope_df_inc_filtered$slope),
+      sd_inc_slope = sd(slope_df_inc_filtered$slope),
+      mean_dec_slope = mean(slope_df_dec_filtered$slope),
+      sd_dec_slope = sd(slope_df_dec_filtered$slope),
+      inc_seq_num_raw = length(inc_sequences),
+      inc_seq_num = nrow(slope_df_inc_filtered),
+      dec_seq_num_raw = length(dec_sequences),
+      dec_seq_num = nrow(slope_df_dec_filtered)
+    )
+  }
+  # Define the plotting functions
+  create_plot <- function(df) {
+    lm_model <- lm(RRI ~ SBP, data = df)
+    slope <- coef(lm_model)[2]
+    r_squared <- summary(lm_model)$r.squared
+    
+    ggplot(df, aes(x = SBP, y = RRI, color = as.factor(increasing))) +
+      geom_point() +
+      geom_smooth(method = "lm", se = FALSE) +
+      scale_color_manual(values = c("TRUE" = "blue", "FALSE" = "red"), 
+                         labels = c("Increasing", "Decreasing")) +
+      theme_classic() +
+      theme(
+        text = element_text(size = 8),
+        axis.title.y = element_blank(),
+        axis.ticks.y = element_blank(),
+        axis.title.x = element_blank(),
+        axis.ticks.x = element_blank(),
+        legend.position = "none"  # Adjust legend position as needed
+      ) +
+      guides(x = guide_axis(angle = 90)) +
+      labs(color = "Trend") +
+      annotate("text", x = min(df$SBP), y = max(df$RRI), 
+               label = sprintf("Slope: %.2f\nR²: %.2f", slope, r_squared), 
+               hjust = 0, vjust = 1, size = 3, color = "black", fontface = "italic")
+  }
+  
+  create_plot_if <- function(df) {
+    # Fit a linear model to get slope and R-squared
+    lm_model <- lm(RRI ~ SBP, data = df)
+    slope <- coef(lm_model)[2]
+    r_squared <- summary(lm_model)$r.squared
+    
+    # Check if R-squared is greater than or equal to 0.85
+    if (r_squared >= 0.85) {
+      ggplot(df, aes(x = SBP, y = RRI, color = as.factor(increasing))) +
+        geom_point() +
+        geom_smooth(method = "lm", se = FALSE) +
+        scale_color_manual(values = c("TRUE" = "blue", "FALSE" = "red"), 
+                           labels = c("Increasing", "Decreasing")) +
+        theme_classic() +
+        theme(
+          text = element_text(size = 8),
+          axis.title.y = element_blank(),
+          axis.ticks.y = element_blank(),
+          axis.title.x = element_blank(),
+          axis.ticks.x = element_blank(),
+          legend.position = "none"  # Adjust legend position as needed
+        ) +
+        guides(x = guide_axis(angle = 90)) +
+        labs(color = "Trend") +
+        annotate("text", x = min(df$SBP), y = max(df$RRI), 
+                 label = sprintf("Slope: %.2f\nR²: %.2f", slope, r_squared), 
+                 hjust = 0, vjust = 1, size = 3, color = "black", fontface = "italic")
+    } else {
+      # Return NULL if R-squared is below the threshold
+      return(NULL)
+    }
+  }
+  #title function
+  create_plot_with_title <- function(plot, file_id) {
+    plot + ggtitle(paste("Filtered Lag0 Plot for:", file_id))
+  }
+  # Helper to tag each sequence with its index, then combine all into one df
+  combine_sequences <- function(sequences) {
+  sequences |>
+    imap(\(df, i) mutate(df, sequence_id = as.character(i))) |>
+    list_rbind()
+}
+  # New plotting functions that work on a combined dataframe
+  create_plot_combined <- function(df) {
+  lm_model <- lm(RRI ~ SBP, data = df)
+  slope <- coef(lm_model)[2]
+  r_squared <- summary(lm_model)$r.squared
+  
+  ggplot(df, aes(x = SBP, y = RRI, color = as.factor(increasing), group = sequence_id)) +
+    geom_point() +
+    geom_smooth(method = "lm", se = FALSE) +
+    scale_color_manual(values = c("TRUE" = "blue", "FALSE" = "red"),
+                       labels = c("Increasing", "Decreasing")) +
+    theme_classic() +
+    theme(
+      text = element_text(size = 8),
+      axis.title.y = element_blank(),
+      axis.ticks.y = element_blank(),
+      axis.title.x = element_blank(),
+      axis.ticks.x = element_blank(),
+      legend.position = "none"
+    ) +
+    guides(x = guide_axis(angle = 90)) +
+    labs(color = "Trend") +
+    annotate("text", x = min(df$SBP), y = max(df$RRI),
+             label = sprintf("Slope: %.2f\nR²: %.2f", slope, r_squared),
+             hjust = 0, vjust = 1, size = 3, color = "black", fontface = "italic")
+} 
+  create_plot_if_combined <- function(sequences) {
+  filtered <- keep(sequences, \(df) {
+    lm_model <- lm(RRI ~ SBP, data = df)
+    slope <- coef(lm_model)[2]
+    r_squared <- summary(lm_model)$r.squared
+    is_ascending <- all(df$increasing == TRUE)
+
+    r_squared >= 0.85 &&
+      ((is_ascending && slope <= max_slope) ||
+       (!is_ascending && slope >= -max_slope))
+  })
+
+  if (length(filtered) == 0) return(NULL)
+
+  combined_df <- combine_sequences(filtered)
+  create_plot_combined(combined_df)
+}
+  #saving
+  save_if_not_null <- function(plot, path) {
+  if (!is.null(plot)) {
+    ggsave(path, plot = plot, width = 10, height = 10, dpi = 400)
+  }
+}
+
+#LOOP-----
+#VARS
+  max_slope <- 150
+  #   #filesystem
 folder <- "data_csv"
 
 if (file.exists(folder)) {
@@ -89,60 +346,6 @@ for (i in seq_along(files)) {
   #lag2_df
   lag2_df <- df %>% mutate(SBP = lead(SBP, 2))
   
-  # Unified function to find sequences of increasing or decreasing values
-  find_sequences <- function(df, direction = "increasing") {
-    # Initialize columns to indicate value trends based on direction
-    if (direction == "increasing") {
-      df$RRI_trend <- c(FALSE, diff(df$RRI) > 0)
-      df$SBP_trend <- c(FALSE, diff(df$SBP) > 0)
-      trend_indicator <- TRUE
-    } else if (direction == "decreasing") {
-      df$RRI_trend <- c(FALSE, diff(df$RRI) < 0)
-      df$SBP_trend <- c(FALSE, diff(df$SBP) < 0)
-      trend_indicator <- FALSE
-    } else {
-      stop("Invalid direction. Use 'increasing' or 'decreasing'.")
-    }
-    
-    # Initialize a list to store sequences
-    sequences <- list()
-    
-    i <- 1
-    while (i <= nrow(df) - 2) {
-      # Skip if the next values are NA
-      if (any(is.na(df$RRI_trend[i + 1:2])) || any(is.na(df$SBP_trend[i + 1:2]))) {
-        i <- i + 1
-        next
-      }
-      
-      # Check for a sequence starting at the current index
-      if (df$RRI_trend[i + 1] && df$RRI_trend[i + 2] &&
-          df$SBP_trend[i + 1] && df$SBP_trend[i + 2]) {
-        sequence_start <- i
-        
-        # Move forward to find the end of the sequence
-        while (i <= nrow(df) - 1 && !is.na(df$RRI_trend[i + 1]) &&
-               df$RRI_trend[i + 1] && !is.na(df$SBP_trend[i + 1]) &&
-               df$SBP_trend[i + 1]) {
-          i <- i + 1
-        }
-        
-        # Adjust the sequence end to exclude the last non-trending value
-        sequence_end <- i
-        
-        # Store the sequence if it has at least three values
-        if (sequence_end - sequence_start + 1 >= 3) {
-          sequence <- df[sequence_start:sequence_end, ]
-          sequence$increasing <- trend_indicator
-          sequences <- append(sequences, list(sequence))
-        }
-      }
-      
-      i <- i + 1
-    }
-    
-    return(sequences)
-  }
   
   # Apply the function to each dataframe for increasing sequences
   lag0_inc_sequences <- find_sequences(lag0_df, "increasing")
@@ -155,68 +358,6 @@ for (i in seq_along(files)) {
   lag2_dec_sequences <- find_sequences(lag2_df, "decreasing")
   
   ######REGRESSION SLOPES
-  # Function to fit linear models, extract slope and R-squared, and add increasing/decreasing indicator
-  extract_lm_slope_rsquared <- function(sequences, is_increasing) {
-    # Check if sequences is empty
-    if (length(sequences) == 0) {
-      return(data.frame(index = integer(), 
-                        slope = numeric(), 
-                        rsquared = numeric(), 
-                        increasing = logical(), 
-                        stringsAsFactors = FALSE))
-    }
-    
-    # Create an empty list to store the linear regression models
-    lm_list <- list()
-    
-    # Loop through the sequences using seq_along (safer than 1:length)
-    for (i in seq_along(sequences)) {
-      # Skip if sequence is NULL or has insufficient data
-      if (is.null(sequences[[i]]) || nrow(sequences[[i]]) < 2) {
-        lm_list[[i]] <- NULL
-        next
-      }
-      
-      # Fit a linear regression model to the current sequence
-      tryCatch({
-        lm_model <- lm(RRI ~ SBP, data = sequences[[i]])
-        lm_list[[i]] <- lm_model
-      }, error = function(e) {
-        lm_list[[i]] <- NULL
-        warning(paste("Error fitting model for sequence", i, ":", e$message))
-      })
-    }
-    
-    # Create an empty data frame to store the slope coefficients, R-squared values, and increasing indicator
-    slope_df <- data.frame(index = integer(), 
-                           slope = numeric(), 
-                           rsquared = numeric(), 
-                           increasing = logical(), 
-                           stringsAsFactors = FALSE)
-    
-    # Loop through the linear regression models in lm_list
-    for (i in seq_along(lm_list)) {
-      # Skip if model is NULL
-      if (is.null(lm_list[[i]])) {
-        next
-      }
-      
-      # Extract the slope coefficient from the linear regression model
-      slope <- coef(lm_list[[i]])[2]  # Assuming the slope is the second coefficient
-      rsquared <- summary(lm_list[[i]])$r.squared
-      
-      # Create a new row in the slope_df with the index, slope coefficient, R-squared value, and increasing indicator
-      slope_df <- rbind(slope_df, data.frame(index = i, 
-                                             slope = slope, 
-                                             rsquared = rsquared, 
-                                             increasing = is_increasing, 
-                                             stringsAsFactors = FALSE))
-    }
-    
-    return(slope_df)
-  }
-  
-  
   # Apply the function to each set of sequences
   lag0_slope_df_inc <- extract_lm_slope_rsquared(lag0_inc_sequences,TRUE)
   lag1_slope_df_inc <- extract_lm_slope_rsquared(lag1_inc_sequences,TRUE)
@@ -225,12 +366,12 @@ for (i in seq_along(files)) {
   lag1_slope_df_dec <- extract_lm_slope_rsquared(lag1_dec_sequences,FALSE)
   lag2_slope_df_dec <- extract_lm_slope_rsquared(lag2_dec_sequences,FALSE)
   #Rsquared filter 0.85
-  lag0_slope_df_inc_filtered <- filter(lag0_slope_df_inc,rsquared>=0.85)
-  lag0_slope_df_dec_filtered <- filter (lag0_slope_df_dec,rsquared>=0.85)
-  lag1_slope_df_inc_filtered <- filter(lag1_slope_df_inc,rsquared>=0.85)
-  lag1_slope_df_dec_filtered <- filter (lag1_slope_df_dec,rsquared>=0.85)
-  lag2_slope_df_inc_filtered <- filter(lag2_slope_df_inc,rsquared>=0.85)
-  lag2_slope_df_dec_filtered <- filter (lag2_slope_df_dec,rsquared>=0.85)
+  lag0_slope_df_inc_filtered <- filter(lag0_slope_df_inc,rsquared>=0.85,slope<=max_slope)
+  lag0_slope_df_dec_filtered <- filter (lag0_slope_df_dec,rsquared>=0.85,slope<=max_slope)
+  lag1_slope_df_inc_filtered <- filter(lag1_slope_df_inc,rsquared>=0.85,slope<=max_slope)
+  lag1_slope_df_dec_filtered <- filter (lag1_slope_df_dec,rsquared>=0.85,slope<=max_slope)
+  lag2_slope_df_inc_filtered <- filter(lag2_slope_df_inc,rsquared>=0.85,slope<=max_slope)
+  lag2_slope_df_dec_filtered <- filter (lag2_slope_df_dec,rsquared>=0.85,slope<=max_slope)
   #combine
   lag0_final_full <- rbind(lag0_slope_df_inc_filtered,lag0_slope_df_dec_filtered)
   lag1_final_full <- rbind(lag1_slope_df_inc_filtered,lag1_slope_df_dec_filtered)
@@ -241,22 +382,6 @@ for (i in seq_along(files)) {
   lag2_sequences<-c(lag2_inc_sequences,lag2_dec_sequences)
   
 ###Summary
-  calculate_summary_stats <- function(final_full, slope_df_inc_filtered, slope_df_dec_filtered, sequences, inc_sequences, dec_sequences) {
-    list(
-      mean_slope = mean(final_full$slope),
-      sd_slope = sd(final_full$slope),
-      seq_num = nrow(final_full),
-      seq_num_raw = length(sequences),
-      mean_inc_slope = mean(slope_df_inc_filtered$slope),
-      sd_inc_slope = sd(slope_df_inc_filtered$slope),
-      mean_dec_slope = mean(slope_df_dec_filtered$slope),
-      sd_dec_slope = sd(slope_df_dec_filtered$slope),
-      inc_seq_num_raw = length(inc_sequences),
-      inc_seq_num = nrow(slope_df_inc_filtered),
-      dec_seq_num_raw = length(dec_sequences),
-      dec_seq_num = nrow(slope_df_dec_filtered)
-    )
-  }
   # Calculate summaries for lag0
   lag0_summary <- calculate_summary_stats(
     lag0_final_full, 
@@ -341,93 +466,36 @@ for (i in seq_along(files)) {
             row.names = TRUE)
    #BRS Sequence plot
 
-  # Define the plotting functions
-  create_plot <- function(df) {
-    lm_model <- lm(RRI ~ SBP, data = df)
-    slope <- coef(lm_model)[2]
-    r_squared <- summary(lm_model)$r.squared
-    
-    ggplot(df, aes(x = SBP, y = RRI, color = as.factor(increasing))) +
-      geom_point() +
-      geom_smooth(method = "lm", se = FALSE) +
-      scale_color_manual(values = c("TRUE" = "blue", "FALSE" = "red"), 
-                         labels = c("Increasing", "Decreasing")) +
-      theme_classic() +
-      theme(
-        text = element_text(size = 8),
-        axis.title.y = element_blank(),
-        axis.ticks.y = element_blank(),
-        axis.title.x = element_blank(),
-        axis.ticks.x = element_blank(),
-        legend.position = "none"  # Adjust legend position as needed
-      ) +
-      guides(x = guide_axis(angle = 90)) +
-      labs(color = "Trend") +
-      annotate("text", x = min(df$SBP), y = max(df$RRI), 
-               label = sprintf("Slope: %.2f\nR²: %.2f", slope, r_squared), 
-               hjust = 0, vjust = 1, size = 3, color = "black", fontface = "italic")
-  }
-  
-  create_plot_if <- function(df) {
-    # Fit a linear model to get slope and R-squared
-    lm_model <- lm(RRI ~ SBP, data = df)
-    slope <- coef(lm_model)[2]
-    r_squared <- summary(lm_model)$r.squared
-    
-    # Check if R-squared is greater than or equal to 0.85
-    if (r_squared >= 0.85) {
-      ggplot(df, aes(x = SBP, y = RRI, color = as.factor(increasing))) +
-        geom_point() +
-        geom_smooth(method = "lm", se = FALSE) +
-        scale_color_manual(values = c("TRUE" = "blue", "FALSE" = "red"), 
-                           labels = c("Increasing", "Decreasing")) +
-        theme_classic() +
-        theme(
-          text = element_text(size = 8),
-          axis.title.y = element_blank(),
-          axis.ticks.y = element_blank(),
-          axis.title.x = element_blank(),
-          axis.ticks.x = element_blank(),
-          legend.position = "none"  # Adjust legend position as needed
-        ) +
-        guides(x = guide_axis(angle = 90)) +
-        labs(color = "Trend") +
-        annotate("text", x = min(df$SBP), y = max(df$RRI), 
-                 label = sprintf("Slope: %.2f\nR²: %.2f", slope, r_squared), 
-                 hjust = 0, vjust = 1, size = 3, color = "black", fontface = "italic")
-    } else {
-      # Return NULL if R-squared is below the threshold
-      return(NULL)
-    }
-  }
-  #title function
-  create_plot_with_title <- function(plot, file_id) {
-    plot + ggtitle(paste("Filtered Lag0 Plot for:", file_id))
-  }
+
   # Extract the base filename without extension
   base_filename <- tools::file_path_sans_ext(basename(file))
-  
   #plots
-  
-  lag0_plots_filtered <- map(lag0_sequences, create_plot_if)
-  lag0_plot_filtered <- wrap_plots(Filter(Negate(is.null), lag0_plots_filtered))
-  lag0_plot_filtered_with_title <- create_plot_with_title(lag0_plot_filtered, file_id)
-  ggsave(file.path(getwd(), "export", file.id, "plots", paste0(base_filename, "_lag0_plot_filtered.png")), 
-         plot = lag0_plot_filtered, width = 10, height = 10, dpi = 400)
-  
-  
-  lag1_plots_filtered <- map(lag1_sequences, create_plot_if)
-  lag1_plot_filtered <- wrap_plots(Filter(Negate(is.null), lag1_plots_filtered))
-  lag1_plot_filtered_with_title <- create_plot_with_title(lag1_plot_filtered, file_id)
-  ggsave(file.path(getwd(), "export", file.id, "plots", paste0(base_filename, "_lag1_plot_filtered.png")), 
-         plot = lag1_plot_filtered, width = 10, height = 10, dpi = 400)
-  
- 
-  lag2_plots_filtered <- map(lag2_sequences, create_plot_if)
-  lag2_plot_filtered <- wrap_plots(Filter(Negate(is.null), lag2_plots_filtered))
-  lag2_plot_filtered_with_title <- create_plot_with_title(lag2_plot_filtered, file_id)
-  ggsave(file.path(getwd(), "export", file.id, "plots", paste0(base_filename, "_lag2_plot_filtered.png")), 
-         plot = lag2_plot_filtered, width = 10, height = 10, dpi = 400)
+
+# Plots — now one plot per lag, all qualifying sequences overlaid
+lag0_plot_inc <- create_plot_if_combined(lag0_inc_sequences)
+lag0_plot_dec <- create_plot_if_combined(lag0_dec_sequences)
+
+lag1_plot_inc <- create_plot_if_combined(lag1_inc_sequences)
+lag1_plot_dec <- create_plot_if_combined(lag1_dec_sequences)
+
+lag2_plot_inc <- create_plot_if_combined(lag2_inc_sequences)
+lag2_plot_dec <- create_plot_if_combined(lag2_dec_sequences)
+
+# Save (guard against NULL in case no sequences pass the R² threshold)
+save_if_not_null(lag0_plot_inc,
+  file.path(getwd(), "export", file.id, "plots", paste0(base_filename, "_lag0_plot_inc.png")))
+save_if_not_null(lag0_plot_dec,
+  file.path(getwd(), "export", file.id, "plots", paste0(base_filename, "_lag0_plot_dec.png")))
+
+save_if_not_null(lag1_plot_inc,
+  file.path(getwd(), "export", file.id, "plots", paste0(base_filename, "_lag1_plot_inc.png")))
+save_if_not_null(lag1_plot_dec,
+  file.path(getwd(), "export", file.id, "plots", paste0(base_filename, "_lag1_plot_dec.png")))
+
+save_if_not_null(lag2_plot_inc,
+  file.path(getwd(), "export", file.id, "plots", paste0(base_filename, "_lag2_plot_inc.png")))
+save_if_not_null(lag2_plot_dec,
+  file.path(getwd(), "export", file.id, "plots", paste0(base_filename, "_lag2_plot_dec.png")))
   
   # Update progress bar
   setTxtProgressBar(pb, i)
