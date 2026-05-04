@@ -65,7 +65,7 @@ Each file from the data\_csv folder will now have its own export folder.
 Exported files include:
 
 - BRS results.csv 
-  - This file contains the summary info that has been filtered. Mean slope, Slope SD, and sequence count for lag 0,1,2 will be in this file. Outlier sequence slopes that do not meet criteria (R<sup>2</sup><0.85) have been removed from these values.
+  - This file contains the summary info that has been filtered. Mean slope, Slope SD, and sequence count for lag 0,1,2 will be in this file. Outlier sequence slopes that do not meet criteria (R<sup>2</sup><0.85,slope<150) have been removed from these values.
 - lag0\_slope
   - List of the sequences identified using lag 0 with their slopes and r<sup>2</sup> values
 - lag0\_data
@@ -77,7 +77,7 @@ Exported files include:
 
 In addition to these files, there will be a “plots” folder in the export for each file. 
 
-These plots are visualizations of every identified sequence, and are not necessary for data extraction, but can be helpful if troubleshooting a particular file. The plots are associated with the slopes in the filtered lagX\_slope.csv files, blue indicates increasing sequences, red indicates decreasing sequences
+These plots are visualizations of every identified sequence, and are not necessary for data extraction, but can be helpful if troubleshooting a particular file. The plots are associated with the slopes in the filtered lagX\_slope.csv files, red indicates increasing sequences, blue indicates decreasing sequences
 
 *NEW* to pull the data from your export folder into a summary csv, the BRS_Result_puller script will allow you to quickly extract the lag of your choice per file into a single CSV for easy exporting and summarization. 
 LAUNCH USING: 
